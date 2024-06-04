@@ -25,7 +25,7 @@ julia> push(a,2,3)
     l = a.length
     nl = l + UInt8(NV)
     cv = cvals[end]
-    return ImmutableVector(ntuple(i->(i<=l ? (@inbounds d[i]) : i < nl ? cvals[i-l] : cv),Val{N_MAX}()),l+NV)
+    return ImmutableVector{N_MAX,T}(ntuple(i->(i<=l ? (@inbounds d[i]) : i < nl ? cvals[i-l] : cv),Val{N_MAX}()),l+NV)
 end
 
 """
@@ -55,5 +55,5 @@ julia> pushfirst(a,-1,0)
     l = a.length
     nl = l + UInt8(NV)
     cv = d[l]
-    return ImmutableVector(ntuple(i->(i<=NV ? (@inbounds cvals[i]) : i < nl ? d[i-NV] : cv),Val{N_MAX}()),l+NV)
+    return ImmutableVector{N_MAX,T}(ntuple(i->(i<=NV ? (@inbounds cvals[i]) : i < nl ? d[i-NV] : cv),Val{N_MAX}()),l+NV)
 end

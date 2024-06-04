@@ -72,5 +72,5 @@ function Base.circshift(a::ImmutableVector{N,T},nn::Integer) where {N,T}
         return @inbounds a[k]
     end
     last_f = f(l)
-    return ImmutableVector{N}(ntuple(i->(i < l ? f(i) : last_f),Val{N}()),a.length)
+    return ImmutableVector{N,T}(ntuple(i->(i < l ? f(i) : last_f),Val{N}()),a.length)
 end

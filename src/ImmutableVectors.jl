@@ -27,14 +27,14 @@ end
     N > N_MAX && throw(DomainError(data))
     N == N_MAX && return ImmutableVector(data,length)
     last_data = data[length]
-    return ImmutableVector(ntuple(i->(i < length ? data[i] : last_data),Val(N_MAX)),length)
+    return ImmutableVector{N_MAX,T}(ntuple(i->(i < length ? data[i] : last_data),Val(N_MAX)),length)
 end
 
 @inline function ImmutableVector{N_MAX}(v::AbstractVector{T}) where {N_MAX,T}
     l = length(v)
     l <= N_MAX || throw(DimensionMismatch("Vector length is larger than maximum specified length"))
     last_v = v[l]
-    return ImmutableVector(ntuple(i->(i < l ? v[i] : last_v),Val{N_MAX}()),l)
+    return ImmutableVector{N_MAX,T}(ntuple(i->(i < l ? v[i] : last_v),Val{N_MAX}()),l)
 end
 
 @inline ImmutableVector{N_MAX}(v::T) where {N_MAX,T} = ImmutableVector{N_MAX,T}(ntuple(i->v,Val{N_MAX}()),UInt8(1))
