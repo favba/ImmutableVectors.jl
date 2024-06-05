@@ -49,6 +49,9 @@ end
 
 @inline ImmutableVector{N_MAX}(v::T) where {N_MAX,T} = @inbounds ImmutableVector{N_MAX,T}(ntuple(i->v,Val{N_MAX}()),0x01)
 
+default_initializer(::Type{T}) where T = zero(T)
+@inline ImmutableVector{N_MAX,T}() where {N_MAX,T} = @inbounds ImmutableVector{N_MAX,T}(ntuple(i->default_initializer(T),Val{N_MAX}()),0x00)
+
 @inline Base.length(d::ImmutableVector) = Int(d.length)
 @inline Base.size(d::ImmutableVector) = (length(d),)
 
