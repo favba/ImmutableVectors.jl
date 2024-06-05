@@ -42,7 +42,7 @@ end
 
 @inline function ImmutableVector{N_MAX}(v::AbstractVector{T}) where {N_MAX,T}
     l = length(v)
-    l <= N_MAX || throw(DimensionMismatch("Vector length is larger than maximum specified length"))
+    l <= N_MAX || throw(DimensionMismatch("Input length ($l) is larger than maximum allowed ($N_MAX)"))
     last_v = v[l]
     return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i < l ? v[i] : last_v),Val{N_MAX}()),unsafe_UInt8(l))
 end
