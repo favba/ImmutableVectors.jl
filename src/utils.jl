@@ -19,13 +19,15 @@ julia> push(a,2,3)
 ```
 """
 @inline function push(a::ImmutableVector{N_MAX,T},vals::Vararg{Any,NV}) where {N_MAX,T,NV}
-    (length(a) + NV) > N_MAX && throw(DimensionMismatch("Cannot grow vector past its maximum allowed size $N_MAX"))
+    L = length(a)
+    NL = L + NV
+    NL > N_MAX && throw(DimensionMismatch("Cannot grow vector past its maximum allowed size $N_MAX"))
     cvals = map(x->convert(T,x),vals)
     d = a.data
     l = a.length
-    nl = l + UInt8(NV)
+    nl = l + unsafe_UInt8(NV)
     cv = cvals[end]
-    return ImmutableVector{N_MAX,T}(ntuple(i->(i<=l ? (@inbounds d[i]) : i < nl ? cvals[i-l] : cv),Val{N_MAX}()),l+NV)
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=L ? (@inbounds d[i]) : i < NL ? cvals[i-L] : cv),Val{N_MAX}()),nl)
 end
 
 """
@@ -49,11 +51,13 @@ julia> pushfirst(a,-1,0)
 ```
 """
 @inline function pushfirst(a::ImmutableVector{N_MAX,T},vals::Vararg{Any,NV}) where {N_MAX,T,NV}
-    (length(a) + NV) > N_MAX && throw(DimensionMismatch("Cannot grow vector past its maximum allowed size $N_MAX"))
+    L = length(a)
+    NL = L + NV
+    NL > N_MAX && throw(DimensionMismatch("Cannot grow vector past its maximum allowed size $N_MAX"))
     cvals = map(x->convert(T,x),vals)
     d = a.data
     l = a.length
     nl = l + UInt8(NV)
-    cv = d[l]
-    return ImmutableVector{N_MAX,T}(ntuple(i->(i<=NV ? (@inbounds cvals[i]) : i < nl ? d[i-NV] : cv),Val{N_MAX}()),l+NV)
+    cv = d[L]
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=NV ? (@inbounds cvals[i]) : i < NL ? d[i-NV] : cv),Val{N_MAX}()),nl)
 end

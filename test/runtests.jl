@@ -3,9 +3,8 @@ using Test
 
 @testset "ImmutableVectors.jl" begin
 
-    @test_throws DomainError ImmutableVector(ntuple(identity,Val{256}()))
+    @test_throws DomainError ImmutableVector(ntuple(identity,Val{256}()),256)
     @test_throws DomainError ImmutableVector{5}((1,0,2,3,5,5,5))
-    @test_throws DomainError ImmutableVector{5}((1,0,2,3,5,0,0))
     @test_throws DimensionMismatch ImmutableVector{3}([-1,2,3,5])
 
     @test typeof(ImmutableVector((1.,2.,3.,4.,5.,5.,5.,5.),5)) === ImmutableVector{8,Float64}
@@ -16,6 +15,7 @@ using Test
 
     @test ImmutableVector{8}([1.0,2.0,3.0,4.0,5.0]) === a
     @test ImmutableVector{3}(2) === ImmutableVector{3,Int}((2,2,2),1)
+    @test ImmutableVector{8}((1,2,3,4,5),3) === ImmutableVector((1,2,3,3,3,3,3,3),3)
 
     @test length(a) === 5
     @test size(a) === (5,)

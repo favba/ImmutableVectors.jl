@@ -28,32 +28,33 @@ ERROR: BoundsError: attempt to access 3-element ImmutableVector{5, Int64} at ind
     @boundscheck checkbounds(a,i)
     cv = convert(T,v)
     l = a.length
+    L = Int(l)
     d = a.data
-    if (l == N_MAX) || (i != l)
-        return ImmutableVector{N_MAX,T}(Base.setindex(d,cv,i),l)
+    if (L == N_MAX) || (i != L)
+        return @inbounds ImmutableVector{N_MAX,T}(Base.setindex(d,cv,i),l)
     else
-        return ImmutableVector{N_MAX,T}(ntuple(i->(i<l ? d[i] : cv),Val{N_MAX}()),l)
+        return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<L ? d[i] : cv),Val{N_MAX}()),l)
     end
 end
 
 function Base.map(f::F,a::ImmutableVector{N1,T1}) where {F<:Function,N1,T1}
-    Tf = Base.promote_op(f,T1)
-    l = length(a)
+    l = a.length
+    L = Int(l)
     d = a.data
-    last_fd = @inbounds f(d[l])
-    func = i -> (i < l ? (@inbounds f(d[i])) : last_fd)
-    return ImmutableVector{N1,Tf}(ntuple(func,Val{N1}()),a.length)
+    last_fd = @inbounds f(d[L])
+    func = i -> (i < L ? (@inbounds f(d[i])) : last_fd)
+    return @inbounds ImmutableVector(ntuple(func,Val{N1}()),l)
 end
 
 function Base.map(f::F,a::ImmutableVector{N1,T1},b::ImmutableVector{N2,T2}) where {F<:Function,N1,T1,N2,T2}
-    Tf = Base.promote_op(f,T1,T2)
     Nf = min(N1,N2)
-    l = min(length(a),length(b))
+    l = min(a.length,b.length)
+    L = Int(l)
     da = a.data
     db = b.data
-    last_fab = @inbounds f(da[l],db[l])
-    func = i -> (i < l ? (@inbounds f(da[i], db[i])) : last_fab)
-    return ImmutableVector{Nf,Tf}(ntuple(func,Val{Nf}()),UInt(l))
+    last_fab = @inbounds f(da[L],db[L])
+    func = i -> (i < L ? (@inbounds f(da[i], db[i])) : last_fab)
+    return @inbounds ImmutableVector(ntuple(func,Val{Nf}()),l)
 end
 
 Base.map(f,a::Tuple,b::ImmutableVector) = map(f,ImmutableVector(a),b)
@@ -72,5 +73,5 @@ function Base.circshift(a::ImmutableVector{N,T},nn::Integer) where {N,T}
         return @inbounds a[k]
     end
     last_f = f(l)
-    return ImmutableVector{N,T}(ntuple(i->(i < l ? f(i) : last_f),Val{N}()),a.length)
+    return @inbounds ImmutableVector{N,T}(ntuple(i->(i < l ? f(i) : last_f),Val{N}()),a.length)
 end
