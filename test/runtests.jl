@@ -52,9 +52,11 @@ using Test
 
     @test push(a,6) == ImmutableVector((1.,2.,3.,4.,5.,6.,6.,6.),6)
     @test push(a,6,4) == ImmutableVector((1.,2.,3.,4.,5.,6.,4.,4.),7)
+    @test_throws BoundsError push(a,1,1,1,1)
 
     @test push(ImmutableVector{3,Float64}(),2) === ImmutableVector((2.0,2.0,2.0),0x01)
 
     @test pushfirst(a,6) == ImmutableVector((6.,1.,2.,3.,4.,5.,5.,5.),6)
     @test pushfirst(a,6,4) == ImmutableVector((6.,4.,1.,2.,3.,4.,5.,5.),7)
+    @test_throws BoundsError pushfirst(a,1,1,1,1)
 end
