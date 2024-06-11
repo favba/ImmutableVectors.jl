@@ -41,6 +41,7 @@ using Test
     @test map(+,a,a) === ImmutableVector((2.,4.,6.,8.,10.,10.,10.,10.),5)
     @test map(-,a,(1,2,3,4)) === ImmutableVector((0.0,0.0,0.0,0.0))
     @test map(-,(1,2,3,4),a) === ImmutableVector((0.0,0.0,0.0,0.0))
+    @test map(sqrt,ImmutableVector{6,Int}(1,2,3,4)) === ImmutableVector{6,Float64}(sqrt(1),sqrt(2),sqrt(3),sqrt(4))
 
     @test circshift(a,1) == ImmutableVector{8}([5.0,1.0,2.0,3.0,4.0])
     @test circshift(a,-1) == ImmutableVector{8}([2.0,3.0,4.0,5.0,1.0])

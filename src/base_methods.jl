@@ -33,7 +33,7 @@ ERROR: BoundsError: attempt to access 3-element ImmutableVector{5, Int64} at ind
     return @inbounds ImmutableVector{N_MAX,T}(Base.setindex(d,cv,i),l)
 end
 
-Base.map(f::F,a::ImmutableVector{N1,T1}) where {F<:Function,N1,T1} = @inbounds ImmutableVector{N1,T1}(map(f,a.data),a.length)
+Base.map(f::F,a::ImmutableVector{N1,T1}) where {F<:Function,N1,T1} = @inbounds ImmutableVector(map(f,a.data),a.length)
 
 Base.map(f::F,a::ImmutableVector{N1,T1},b::ImmutableVector{N2,T2}) where {F<:Function,N1,T1,N2,T2} = @inbounds ImmutableVector(map(f,a.data,b.data),min(a.length,b.length))
 
