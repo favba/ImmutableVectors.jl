@@ -33,9 +33,29 @@ ERROR: BoundsError: attempt to access 3-element ImmutableVector{5, Int64} at ind
     return @inbounds ImmutableVector{N_MAX,T}(Base.setindex(d,cv,i),l)
 end
 
-Base.map(f::F,a::ImmutableVector{N1,T1}) where {F<:Function,N1,T1} = @inbounds ImmutableVector(map(f,a.data),a.length)
+function Base.map(f::F,a::ImmutableVector{N1,T1}) where {F<:Function,N1,T1}
+    l = a.length
+    L = Int(l)
+    d = a.data
+    last_fd = @inbounds f(d[L])
+    func = @inline function (i) 
+        i < L ? (@inbounds f(d[i])) : last_fd
+    end
+    return @inbounds ImmutableVector(ntuple(func,Val{N1}()),l)
+end
 
-Base.map(f::F,a::ImmutableVector{N1,T1},b::ImmutableVector{N2,T2}) where {F<:Function,N1,T1,N2,T2} = @inbounds ImmutableVector(map(f,a.data,b.data),min(a.length,b.length))
+function Base.map(f::F,a::ImmutableVector{N1,T1},b::ImmutableVector{N2,T2}) where {F<:Function,N1,T1,N2,T2}
+    Nf = min(N1,N2)
+    l = min(a.length,b.length)
+    L = Int(l)
+    da = a.data
+    db = b.data
+    last_fab = @inbounds f(da[L],db[L])
+    func = @inline function (i) 
+        i < L ? (@inbounds f(da[i], db[i])) : last_fab
+    end
+    return @inbounds ImmutableVector(ntuple(func,Val{Nf}()),l)
+end
 
 Base.map(f,a::Tuple,b::ImmutableVector) = map(f,ImmutableVector(a),b)
 Base.map(f,a::ImmutableVector,b::Tuple) = map(f,a,ImmutableVector(b))
