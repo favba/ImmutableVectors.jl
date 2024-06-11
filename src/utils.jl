@@ -3,7 +3,7 @@
 
 If `length(vector) + length(items) <= N` returns a new `ImmutableVector{N}` with the `items` appended to the elements of `vector` (in the given order).
 
-See also [`pushfirst`](@ref)
+See also [`pushfirst`](@ref), [`insert`](@ref)
 
 # Examples
 ```julia-repl
@@ -25,8 +25,20 @@ julia> push(a,2,3)
     @boundscheck NL > N_MAX && throw(BoundsError(d,NL)) 
     l = a.length
     nl = l + unsafe_UInt8(NV)
-    @inbounds cv = convert(T,vals[NV])
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=L ? (@inbounds d[i]) : i < NL ? (@inbounds convert(T,vals[i-L])) : cv),Val{N_MAX}()),nl)
+    lcv = @inbounds convert(T,vals[NV])
+    func = @inline function (i)
+        if i<=L 
+            return @inbounds d[i]
+        else 
+            j = i-L
+            if j < NV
+                return @inbounds convert(T,vals[j])
+            else
+                return lcv
+            end
+        end
+    end
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(func, Val{N_MAX}()),nl)
 end
 
 """
@@ -34,7 +46,7 @@ end
 
 If `length(vector) + length(items) <= N` returns a new `ImmutableVector{N}` with the `items` prepended to the elements of `vector` (in the given order).
 
-See also [`push`](@ref)
+See also [`push`](@ref), [`insert`](@ref)
 
 # Examples
 ```julia-repl
@@ -56,7 +68,10 @@ julia> pushfirst(a,-1,0)
     @boundscheck NL > N_MAX && throw(BoundsError(d,NL)) 
     l = a.length
     nl = l + UInt8(NV)
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=NV ? (@inbounds convert(T,vals[i])) : (@inbounds d[i-NV])),Val{N_MAX}()),nl)
+    f = @inline function (i)
+        i<=NV ? (@inbounds convert(T,vals[i])) : (@inbounds d[i-NV])
+    end
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val{N_MAX}()),nl)
 end
 
 """
