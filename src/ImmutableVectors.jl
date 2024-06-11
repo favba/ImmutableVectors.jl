@@ -58,15 +58,19 @@ Base.Base.@propagate_inbounds function ImmutableVector{N_MAX}(data::NTuple{N,T},
     return @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val(N_MAX)),unsafe_UInt8(length))
 end
 
-@inline function ImmutableVector{N_MAX}(v::AbstractVector{T}) where {N_MAX,T}
+@inline function ImmutableVector{N_MAX,T1}(v::AbstractVector{T}) where {N_MAX,T1,T}
     l = length(v)
     l <= N_MAX || throw(DimensionMismatch("Input length ($l) is larger than maximum allowed ($N_MAX)"))
     f = @inline function (i)
         ii = min(l,i)
-        @inbounds v[ii]
+        @inbounds convert(T1,v[ii])
     end
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val{N_MAX}()),unsafe_UInt8(l))
+    return @inbounds ImmutableVector{N_MAX,T1}(ntuple(f,Val{N_MAX}()),unsafe_UInt8(l))
 end
+
+@inline ImmutableVector{N_MAX}(v::AbstractVector{T}) where {N_MAX,T} = ImmutableVector{N_MAX,T}(v)
+
+Base.convert(::Type{ImmutableVector{N_MAX,T}},v::AbstractVector) where {N_MAX,T}= ImmutableVector{N_MAX,T}(v)
 
 @inline Base.length(d::ImmutableVector) = Int(d.length)
 @inline Base.size(d::ImmutableVector) = (length(d),)
