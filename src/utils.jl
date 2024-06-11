@@ -23,11 +23,10 @@ julia> push(a,2,3)
     NL = L + NV
     d = a.data
     @boundscheck NL > N_MAX && throw(BoundsError(d,NL)) 
-    cvals = map(x->convert(T,x),vals)
     l = a.length
     nl = l + unsafe_UInt8(NV)
-    @inbounds cv = cvals[end]
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=L ? (@inbounds d[i]) : i < NL ? (@inbounds cvals[i-L]) : cv),Val{N_MAX}()),nl)
+    @inbounds cv = convert(T,vals[NV])
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=L ? (@inbounds d[i]) : i < NL ? (@inbounds convert(T,vals[i-L])) : cv),Val{N_MAX}()),nl)
 end
 
 """
@@ -55,9 +54,48 @@ julia> pushfirst(a,-1,0)
     NL = L + NV
     d = a.data
     @boundscheck NL > N_MAX && throw(BoundsError(d,NL)) 
-    cvals = map(x->convert(T,x),vals)
     l = a.length
     nl = l + UInt8(NV)
-    @inbounds cv = d[L]
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=NV ? (@inbounds cvals[i]) : i < NL ? (@inbounds d[i-NV]) : cv),Val{N_MAX}()),nl)
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i<=NV ? (@inbounds convert(T,vals[i])) : (@inbounds d[i-NV])),Val{N_MAX}()),nl)
+end
+
+"""
+    insert(a::ImmutableVector{N}, index::Integer, item) -> ImmutableVector{N}
+
+
+Returns a `ImmutableVector` with an `item` inserted into `a` at the given `index`. `index` is the index of `item` in the resulting `ImmutableVector`.
+
+See also: [`push`](@ref), [`pushfirst`](@ref), popat.
+
+# Examples
+```julia-repl
+julia> a = ImmutableVector((2.0,3.0,4.0,5.0,6.0,6.0,6.0),5)
+5-element ImmutableVector{7, Float64}:
+ 2.0
+ 3.0
+ 4.0
+ 5.0
+ 6.0
+
+julia> b = insert(a,3,0.0)
+6-element ImmutableVector{7, Float64}:
+ 2.0
+ 3.0
+ 0.0
+ 4.0
+ 5.0
+ 6.0
+
+```
+"""
+@inline function insert(a::ImmutableVector{N,T},index::Integer,item) where {N,T}
+    @boundscheck checkbounds(a,index)
+    NL = length(a) + 1
+    d = a.data
+    @boundscheck NL > N && throw(BoundsError(d,NL))
+    citem = convert(T,item)
+    f = @inline function (i)
+        i < index ? (@inbounds d[i]) : i == index ? citem : (@inbounds d[i-1])
+    end
+    return @inbounds ImmutableVector{N,T}(ntuple(f,Val{N}()),a.length+0x01)
 end

@@ -1,7 +1,7 @@
 module ImmutableVectors
 
 export ImmutableVector
-export max_length, push, pushfirst
+export max_length, push, pushfirst, insert
 
 @inline unsafe_UInt8(x::Integer) = Base.Core.Intrinsics.trunc_int(UInt8,x)
 @inline unsafe_UInt8(x::UInt8) = x
@@ -25,32 +25,48 @@ Base.@propagate_inbounds function ImmutableVector(data::NTuple{N,T},length::Numb
     return ImmutableVector{N,T}(data,length)
 end
 
-@inline function ImmutableVector{N_MAX}(data::NTuple{N,T}) where {N_MAX,N,T}
-    N > N_MAX && throw(DomainError(data))
-    N == N_MAX && return ImmutableVector(data)
-    last_data = data[N]
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i < N ? data[i] : last_data),Val(N_MAX)),UInt8(N))
+@inline function ImmutableVector{N_MAX,T}(v1,vals::Vararg{Any,N}) where {N_MAX,N,T}
+    N+1 <= N_MAX || throw(DomainError(N+1,"Number of input values is greater than maximum supported size of $N_MAX"))
+    cv1 = convert(T,v1)
+    f = @inline function (i)
+        is_first = i==1
+        ii = is_first ? 1 : min(i-1,N)
+        return is_first ? cv1 : convert(T,@inbounds vals[ii])
+    end
+    @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val{N_MAX}()),UInt8(N+1))
 end
+
+@inline function ImmutableVector{N_MAX,T}(v1,vals::Vararg{Any,0}) where {N_MAX,T}
+    cv1 = convert(T,v1)
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->cv1,Val{N_MAX}()),0x01)
+end
+
+@inline ImmutableVector{N_MAX}(v1::T,vals::Vararg{T,N}) where {N_MAX,N,T} = ImmutableVector{N_MAX,T}(v1,vals...)
+
+default_initializer(::Type{T}) where T = zero(T)
+@inline ImmutableVector{N_MAX,T}() where {N_MAX,T} = @inbounds ImmutableVector{N_MAX,T}(ntuple(i->default_initializer(T),Val{N_MAX}()),0x00)
+
+@inline ImmutableVector{N_MAX}(data::NTuple{N,T}) where {N_MAX,N,T} = ImmutableVector{N_MAX}(data...)
 
 Base.Base.@propagate_inbounds function ImmutableVector{N_MAX}(data::NTuple{N,T},length::Number) where {N_MAX,N,T}
     N > N_MAX && throw(DomainError(data))
     N == N_MAX && return ImmutableVector(data,length)
-    last_data = data[length]
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i < length ? data[i] : last_data),Val(N_MAX)),unsafe_UInt8(length))
+    f = @inline function (i)
+        ii = min(length,i)
+        @inbounds data[ii]
+    end
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val(N_MAX)),unsafe_UInt8(length))
 end
-
 
 @inline function ImmutableVector{N_MAX}(v::AbstractVector{T}) where {N_MAX,T}
     l = length(v)
     l <= N_MAX || throw(DimensionMismatch("Input length ($l) is larger than maximum allowed ($N_MAX)"))
-    last_v = v[l]
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(i->(i < l ? v[i] : last_v),Val{N_MAX}()),unsafe_UInt8(l))
+    f = @inline function (i)
+        ii = min(l,i)
+        @inbounds v[ii]
+    end
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val{N_MAX}()),unsafe_UInt8(l))
 end
-
-@inline ImmutableVector{N_MAX}(v::T) where {N_MAX,T} = @inbounds ImmutableVector{N_MAX,T}(ntuple(i->v,Val{N_MAX}()),0x01)
-
-default_initializer(::Type{T}) where T = zero(T)
-@inline ImmutableVector{N_MAX,T}() where {N_MAX,T} = @inbounds ImmutableVector{N_MAX,T}(ntuple(i->default_initializer(T),Val{N_MAX}()),0x00)
 
 @inline Base.length(d::ImmutableVector) = Int(d.length)
 @inline Base.size(d::ImmutableVector) = (length(d),)
