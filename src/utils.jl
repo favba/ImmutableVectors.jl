@@ -18,27 +18,27 @@ julia> push(a,2,3)
  3
 ```
 """
-@inline function push(a::ImmutableVector{N_MAX,T},vals::Vararg{Any,NV}) where {N_MAX,T,NV}
+@inline function push(a::ImmutableVector{N_MAX,T}, vals::Vararg{Any,NV}) where {N_MAX,T,NV}
     L = length(a)
     NL = L + NV
     d = a.data
-    @boundscheck NL > N_MAX && throw(BoundsError(d,NL)) 
+    @boundscheck NL > N_MAX && throw(BoundsError(d, NL))
     l = a.length
     nl = l + unsafe_UInt8(NV)
-    lcv = @inbounds convert(T,vals[NV])
+    lcv = @inbounds convert(T, vals[NV])
     func = @inline function (i)
-        if i<=L 
+        if i <= L
             return @inbounds d[i]
-        else 
-            j = i-L
+        else
+            j = i - L
             if j < NV
-                return @inbounds convert(T,vals[j])
+                return @inbounds convert(T, vals[j])
             else
                 return lcv
             end
         end
     end
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(func, Val{N_MAX}()),nl)
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(func, Val{N_MAX}()), nl)
 end
 
 """
@@ -61,17 +61,17 @@ julia> pushfirst(a,-1,0)
   1
 ```
 """
-@inline function pushfirst(a::ImmutableVector{N_MAX,T},vals::Vararg{Any,NV}) where {N_MAX,T,NV}
+@inline function pushfirst(a::ImmutableVector{N_MAX,T}, vals::Vararg{Any,NV}) where {N_MAX,T,NV}
     L = length(a)
     NL = L + NV
     d = a.data
-    @boundscheck NL > N_MAX && throw(BoundsError(d,NL)) 
+    @boundscheck NL > N_MAX && throw(BoundsError(d, NL))
     l = a.length
     nl = l + UInt8(NV)
     f = @inline function (i)
-        i<=NV ? (@inbounds convert(T,vals[i])) : (@inbounds d[i-NV])
+        i <= NV ? (@inbounds convert(T, vals[i])) : (@inbounds d[i-NV])
     end
-    return @inbounds ImmutableVector{N_MAX,T}(ntuple(f,Val{N_MAX}()),nl)
+    return @inbounds ImmutableVector{N_MAX,T}(ntuple(f, Val{N_MAX}()), nl)
 end
 
 """
@@ -103,14 +103,14 @@ julia> b = insert(a,3,0.0)
 
 ```
 """
-@inline function insert(a::ImmutableVector{N,T},index::Integer,item) where {N,T}
-    @boundscheck checkbounds(a,index)
+@inline function insert(a::ImmutableVector{N,T}, index::Integer, item) where {N,T}
+    @boundscheck checkbounds(a, index)
     NL = length(a) + 1
     d = a.data
-    @boundscheck NL > N && throw(BoundsError(d,NL))
-    citem = convert(T,item)
+    @boundscheck NL > N && throw(BoundsError(d, NL))
+    citem = convert(T, item)
     f = @inline function (i)
         i < index ? (@inbounds d[i]) : i == index ? citem : (@inbounds d[i-1])
     end
-    return @inbounds ImmutableVector{N,T}(ntuple(f,Val{N}()),a.length+0x01)
+    return @inbounds ImmutableVector{N,T}(ntuple(f, Val{N}()), a.length + 0x01)
 end
