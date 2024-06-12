@@ -12,7 +12,7 @@ struct ImmutableVector{MAX_N,T} <: AbstractVector{T}
     
     @inline function ImmutableVector{N_MAX,T}(data::NTuple{N_MAX,T},length::Number) where {N_MAX,T}
         N_MAX <= 255 || throw(DomainError(N_MAX,"Maximum Tuple size supported is 255"))
-        @boundscheck length <= N_MAX || throw(DomainError(length,"Vector length must be equal to or smaller than Tuple length ($N_MAX)"))
+        @boundscheck 0 <= length <= N_MAX || throw(DomainError(length, "Vector length must be equal to or smaller than Tuple length ($N_MAX)"))
         return new{N_MAX,T}(data,unsafe_UInt8(length))
     end
 end
