@@ -28,7 +28,6 @@ ERROR: BoundsError: attempt to access 3-element ImmutableVector{5, Int64} at ind
     @boundscheck checkbounds(a, i)
     cv = convert(T, v)
     l = a.length
-    L = Int(l)
     d = a.data
     return @inbounds ImmutableVector{N_MAX,T}(Base.setindex(d, cv, i), l)
 end

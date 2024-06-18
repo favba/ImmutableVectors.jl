@@ -28,10 +28,11 @@ end
 @inline function ImmutableVector{N_MAX,T}(v1, vals::Vararg{Any,N}) where {N_MAX,N,T}
     N + 1 <= N_MAX || throw(DomainError(N + 1, "Number of input values is greater than maximum supported size of $N_MAX"))
     cv1 = convert(T, v1)
+    cvlast = @inbounds convert(T, vals[N])
     f = @inline function (i)
-        is_first = i == 1
-        ii = is_first ? 1 : min(i - 1, N)
-        return is_first ? cv1 : convert(T, @inbounds vals[ii])
+        i == 1 && return cv1
+        ii = i - 1
+        return ii < N ? convert(T, @inbounds vals[ii]) : cvlast
     end
     @inbounds ImmutableVector{N_MAX,T}(ntuple(f, Val{N_MAX}()), UInt8(N + 1))
 end
@@ -48,12 +49,13 @@ default_initializer(::Type{T}) where {T} = zero(T)
 
 @inline ImmutableVector{N_MAX}(data::NTuple{N,T}) where {N_MAX,N,T} = ImmutableVector{N_MAX}(data...)
 
-Base.Base.@propagate_inbounds function ImmutableVector{N_MAX}(data::NTuple{N,T}, length::Number) where {N_MAX,N,T}
+Base.@propagate_inbounds function ImmutableVector{N_MAX}(data::NTuple{N,T}, length::Number) where {N_MAX,N,T}
     N > N_MAX && throw(DomainError(data))
     N == N_MAX && return ImmutableVector(data, length)
+    @boundscheck 0 <= length <= N || throw(DomainError(length, "Vector length must be equal to or smaller than $N"))
+    last_d = @inbounds data[length]
     f = @inline function (i)
-        ii = min(length, i)
-        @inbounds data[ii]
+        i < length ? (@inbounds data[i]) : last_d
     end
     return @inbounds ImmutableVector{N_MAX,T}(ntuple(f, Val(N_MAX)), unsafe_UInt8(length))
 end
