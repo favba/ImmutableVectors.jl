@@ -65,4 +65,7 @@ using Test
     @test_throws BoundsError pushfirst(a,1,1,1,1)
 
     @test insert(a,3,0) == [1.0, 2.0, 0.0, 3.0, 4.0, 5.0]
+
+    @test sqrt.(a) == map(sqrt, a)
+    @test (sqrt.(a) .+ a .^ 2) == map(x -> (sqrt(x) + x^2), a)
 end
