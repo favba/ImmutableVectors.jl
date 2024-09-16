@@ -10,21 +10,20 @@ Base.BroadcastStyle(::Broadcast.Style{Tuple}, a::ImmutableVecStyle{N_MAX}) where
 Base.BroadcastStyle(::ImmutableVecStyle{N1}, ::ImmutableVecStyle{N2}) where {N1, N2} = ImmutableVecStyle{max(N1, N2)}()
 
 @inline function Base.copy(bc::Broadcast.Broadcasted{ImmutableVecStyle{N}}) where {N}
-    dim = axes(bc)
+    bcf = @inline Broadcast.flatten(bc)
+    dim = axes(bcf)
     length(dim) == 1 || throw(DimensionMismatch("ImmutableVector only supports one dimension"))
-    @inbounds L = dim[1][end]
-    last_el = getindex(bc, L)
-    return @inbounds(ImmutableVector(ntuple(i -> (i < L ? @inbounds(getindex(bc, i)) : last_el), Val(N)), unsafe_UInt8(L)))
-end
 
-@inline function Base.copy(bc::Broadcast.Broadcasted{ImmutableVecStyle{N}, T1, T2, T3}) where {T1, T2, N, T3 <: Tuple{Vararg{ImmutableVector{N}}}}
-    dim = axes(bc)
-    length(dim) == 1 || throw(DimensionMismatch("ImmutableVector only supports one dimension"))
-    lengths = length.(bc.args)
-    if allequal(lengths)
-        return map(bc.f, bc.args...)
+    if length(bcf.args) == 1
+        return @inline map(bcf.f, bcf.args[1])
     else
-        L = maximum(lengths)
-        return @inbounds(ImmutableVector(map(bc.f, getfield.(bc.args, (:data,))...), unsafe_UInt8(L)))
+        @inbounds L = length(dim[1])
+        last_el = @inbounds @inline bcf[L]
+
+        f_tuple = @inline function(i)
+            i < L ? @inbounds(@inline bcf[i]) : last_el
+        end
+
+        return @inline @inbounds(ImmutableVector(ntuple(f_tuple, Val(N)), unsafe_UInt8(L)))
     end
 end
