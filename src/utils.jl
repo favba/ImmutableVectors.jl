@@ -18,27 +18,35 @@ julia> push(a,2,3)
  3
 ```
 """
-@inline function push(a::ImmutableVector{N_MAX, T}, vals::Vararg{Any, NV}) where {N_MAX, T, NV}
+@inline function push(a::ImmutableVector{N_MAX, T}, v, vals::Vararg{Any, NV}) where {N_MAX, T, NV}
     L = length(a)
-    NL = L + NV
+    NL = L + NV + 1
     d = a.data
     @boundscheck NL > N_MAX && throw(BoundsError(d, NL))
     l = a.length
-    nl = l + unsafe_UInt8(NV)
-    lcv = @inbounds convert(T, vals[NV])
-    func = @inline function (i)
-        if i <= L
-            return @inbounds d[i]
-        else
-            j = i - L
-            if j < NV
-                return @inbounds convert(T, vals[j])
+    nl = l + unsafe_UInt8(NV + 1)
+    cv = @inbounds convert(T, v)
+
+    if NV === 0
+        return @inbounds ImmutableVector{N_MAX, T}(Base.setindex(d, cv, NL), nl)
+    else
+        lcv = convert(T, vals[end])
+        func = @inline function (i)
+            if i <= L
+                return @inbounds d[i]
+            elseif i == (L + 1)
+                return cv
             else
-                return lcv
+                j = i - L - 1
+                if j < NV
+                    return @inbounds convert(T, vals[j])
+                else
+                    return lcv
+                end
             end
         end
+        return @inbounds ImmutableVector{N_MAX, T}(ntuple(func, Val{N_MAX}()), nl)
     end
-    return @inbounds ImmutableVector{N_MAX, T}(ntuple(func, Val{N_MAX}()), nl)
 end
 
 """
@@ -110,7 +118,8 @@ julia> b = insert(a,3,0.0)
     @boundscheck NL > N && throw(BoundsError(d, NL))
     citem = convert(T, item)
     f = @inline function (i)
-        i < index ? (@inbounds d[i]) : i == index ? citem : (@inbounds d[i - 1])
+        j = ifelse(i > index, i - 1, i)
+        ifelse(i == index, citem, (@inbounds d[j]))
     end
     return @inbounds ImmutableVector{N, T}(ntuple(f, Val{N}()), a.length + 0x01)
 end

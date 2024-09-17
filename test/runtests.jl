@@ -11,7 +11,7 @@ using Test
 
     @test collect(ImmutableVector((1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0, 5.0), 5)) == [1.0, 2.0, 3.0, 4.0, 5.0]
 
-    a = ImmutableVector((1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0, 5.0), 5)
+    a = ImmutableVector{8}(1.0, 2.0, 3.0, 4.0, 5.0)
 
     @test ImmutableVector{8}([1.0, 2.0, 3.0, 4.0, 5.0]) === a
     @test convert(ImmutableVector{8, Float64}, [1, 2, 3, 4, 5]) === a
@@ -58,10 +58,11 @@ using Test
     @test push(a, 6, 4) == ImmutableVector((1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 4.0, 4.0), 7)
     @test_throws BoundsError push(a, 1, 1, 1, 1)
 
-    @test push(ImmutableVector{3, Float64}(), 2) === ImmutableVector((2.0, 2.0, 2.0), 0x01)
+    @test push(ImmutableVector{3, Float64}(), 2) === ImmutableVector((2.0, 0.0, 0.0), 0x01)
 
     @test pushfirst(a, 6) == ImmutableVector((6.0, 1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0), 6)
     @test pushfirst(a, 6, 4) == ImmutableVector((6.0, 4.0, 1.0, 2.0, 3.0, 4.0, 5.0, 5.0), 7)
+    @test push(a, 6, 4, 5) == ImmutableVector{8}(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 4.0, 5.0)
     @test_throws BoundsError pushfirst(a, 1, 1, 1, 1)
 
     @test insert(a, 3, 0) == [1.0, 2.0, 0.0, 3.0, 4.0, 5.0]
