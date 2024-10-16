@@ -19,6 +19,8 @@ using Test
     @test ImmutableVector{3}(2, 1) === ImmutableVector{3, Int}((2, 1, 1), 2)
     @test ImmutableVector{5, Float64}(0, 1, 0, 3) === ImmutableVector{5, Float64}((0.0, 1.0, 0.0, 3.0, 3.0), 4)
     @test ImmutableVector{8}((1, 2, 3, 4, 5), 3) === ImmutableVector((1, 2, 3, 3, 3, 3, 3, 3), 3)
+    @test convert(ImmutableVector{5,Int}, ImmutableVector{4}(1.0,2.0,3.0,4.0)) == ImmutableVector{5}(1,2,3,4)
+    @test convert(typeof(a), a) === a
 
     @test length(a) === 5
     @test size(a) === (5,)
@@ -71,4 +73,17 @@ using Test
     @test a .+ (1, 1, 1, 1, 1) == map(x -> (x + 1), a)
 
     @test (ImmutableVector((1, 2, 3, 4, 5)) .+ ImmutableVector((5, 4, 3, 2, 1, 1, 1, 1), 5)) === ImmutableVector((6, 6, 6, 6, 6, 6, 6, 6), 5)
+end
+
+@testset "ImmutableVectorArray" begin
+    va = ImVecArray{10,Int}(2,2)
+    e1 = ImmutableVector((1,2,3,4,5,6,7,8,9,10))
+    va[1] = e1
+    @test va[1] === e1
+    @test va[1, 1] === e1
+
+    e2 = ImmutableVector{10}(3,2,4,5,6,2)
+    va[2,2] = e2
+    @test va[2, 2] === e2
+    @test va[4] === e2
 end

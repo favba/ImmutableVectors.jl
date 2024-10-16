@@ -1,7 +1,7 @@
 """
     push(vector::ImmutableVector{N}, items...) -> ImmutableVector{N}
 
-If `length(vector) + length(items) <= N` returns a new `ImmutableVector{N}` with the `items` appended to the elements of `vector` (in the given order).
+If `length(vector) + length(items) <= N` returns a new `ImmutableVector{N}` with the `items` appended to `vector` (in the given order).
 
 See also [`pushfirst`](@ref), [`insert`](@ref)
 
@@ -44,7 +44,7 @@ end
 """
     pushfirst(vector::ImmutableVector{N}, items...) -> ImmutableVector{N}
 
-If `length(vector) + length(items) <= N` returns a new `ImmutableVector{N}` with the `items` prepended to the elements of `vector` (in the given order).
+If `length(vector) + length(items) <= N` returns a new `ImmutableVector{N}` with the `items` prepended to `vector` (in the given order).
 
 See also [`push`](@ref), [`insert`](@ref)
 

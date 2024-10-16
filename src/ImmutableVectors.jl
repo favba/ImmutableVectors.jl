@@ -2,6 +2,7 @@ module ImmutableVectors
 
 export ImmutableVector
 export max_length, push, pushfirst, insert
+export ImmutableVectorArray, ImVecArray
 
 @inline unsafe_UInt8(x::Integer) = Base.Core.Intrinsics.trunc_int(UInt8, x)
 @inline unsafe_UInt8(x::UInt8) = x
@@ -133,5 +134,5 @@ end
 include("broadcast.jl")
 include("base_methods.jl")
 include("utils.jl")
-
+include("struct_array.jl")
 end
