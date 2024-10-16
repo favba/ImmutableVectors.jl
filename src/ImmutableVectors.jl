@@ -6,11 +6,23 @@ export max_length, push, pushfirst, insert
 @inline unsafe_UInt8(x::Integer) = Base.Core.Intrinsics.trunc_int(UInt8, x)
 @inline unsafe_UInt8(x::UInt8) = x
 
+"""
+    ImmutableVector{N_MAX, T} <: AbstractVector{T}
+
+An immutable vector of `T` elements with variable length (up to `N_MAX`) that uses the same memmory layout regardless of it's length, therefore producing efficient memmory layout for arrays of such elements.
+
+# Fields
+
+- `data::NTuple{MAX_N, T}`: Tuple holding the vector data, together with possible padding elements.
+
+- `length::UInt8`: Vector length (Maximum allowed of `MAX_N`)
+
+"""
 struct ImmutableVector{MAX_N, T} <: AbstractVector{T}
     data::NTuple{MAX_N, T}
     length::UInt8
 
-    @inline function ImmutableVector{N_MAX, T}(data::NTuple{N_MAX, T}, length::Number) where {N_MAX, T}
+    @inline function ImmutableVector{N_MAX, T}(data::NTuple{N_MAX, T}, length::Integer) where {N_MAX, T}
         N_MAX <= 255 || throw(DomainError(N_MAX, "Maximum Tuple size supported is 255"))
         @boundscheck 0 <= length <= N_MAX || throw(DomainError(length, "Vector length must be equal to or smaller than Tuple length ($N_MAX)"))
         return new{N_MAX, T}(data, unsafe_UInt8(length))
@@ -21,7 +33,7 @@ end
     return @inbounds ImmutableVector{N, T}(data, UInt8(N))
 end
 
-Base.@propagate_inbounds function ImmutableVector(data::NTuple{N, T}, length::Number) where {N, T}
+Base.@propagate_inbounds function ImmutableVector(data::NTuple{N, T}, length::Integer) where {N, T}
     return ImmutableVector{N, T}(data, length)
 end
 
@@ -49,7 +61,7 @@ default_initializer(::Type{T}) where {T} = zero(T)
 
 @inline ImmutableVector{N_MAX}(data::NTuple{N, T}) where {N_MAX, N, T} = ImmutableVector{N_MAX}(data...)
 
-Base.@propagate_inbounds function ImmutableVector{N_MAX}(data::NTuple{N, T}, length::Number) where {N_MAX, N, T}
+Base.@propagate_inbounds function ImmutableVector{N_MAX}(data::NTuple{N, T}, length::Integer) where {N_MAX, N, T}
     N > N_MAX && throw(DomainError(data))
     N == N_MAX && return ImmutableVector(data, length)
     @boundscheck 0 <= length <= N || throw(DomainError(length, "Vector length must be equal to or smaller than $N"))
@@ -73,6 +85,30 @@ end
 @inline ImmutableVector{N_MAX}(v::AbstractVector{T}) where {N_MAX, T} = ImmutableVector{N_MAX, T}(v)
 
 Base.convert(::Type{ImmutableVector{N_MAX, T}}, v::AbstractVector) where {N_MAX, T} = ImmutableVector{N_MAX, T}(v)
+
+@inline function _convert_smaller(::Type{ImmutableVector{N, T}}, v::ImmutableVector{N2, T2}) where {N, T, N2, T2}
+    data = v.data
+    return @inbounds ImmutableVector{N,T}(ntuple(@inline(i->convert(T,@inbounds(data[min(N2,i)]))), Val{N}()), v.length)
+end
+
+@generated function Base.convert(t::Type{ImmutableVector{N, T}}, v::ImmutableVector{N2, T2}) where {N, T, N2, T2}
+    if N == N2 && T === T2
+        quote
+            $(Expr(:meta, :inline))
+            return v
+        end
+    elseif N2 <= N
+        quote
+            $(Expr(:meta, :inline))
+            return _convert_smaller(t,v)
+        end
+    else
+        quote
+            $(Expr(:meta, :inline))
+            return ImmutableVector{$N, $T}(v)
+        end
+    end
+end
 
 @inline Base.length(d::ImmutableVector) = Int(d.length)
 @inline Base.size(d::ImmutableVector) = (length(d),)
