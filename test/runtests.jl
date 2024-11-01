@@ -73,6 +73,13 @@ using Test
     @test a .+ (1, 1, 1, 1, 1) == map(x -> (x + 1), a)
 
     @test (ImmutableVector((1, 2, 3, 4, 5)) .+ ImmutableVector((5, 4, 3, 2, 1, 1, 1, 1), 5)) === ImmutableVector((6, 6, 6, 6, 6, 6, 6, 6), 5)
+
+    v = ImmutableVector((3,2,1,4,5),5)
+    @test padwith(v,0) === v
+    v2 = ImmutableVector((3,2,1,4,5),3)
+    @test padwith(v2,0) == v2
+    @test padwith(v2,0) !== v2 # !== is the same as !(===)
+    @test padwith(v2,-1) === ImmutableVector((3,2,1,-1,-1),3)
 end
 
 @testset "ImmutableVectorArray" begin

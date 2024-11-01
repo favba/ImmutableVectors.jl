@@ -114,3 +114,36 @@ julia> b = insert(a,3,0.0)
     end
     return @inbounds ImmutableVector{N, T}(ntuple(f, Val{N}()), a.length + 0x01)
 end
+
+"""
+    padwith(v::ImmutableVector{N,T}, val) -> ImmutableVector{N,T}
+
+If `length(v) < N` returns another vector with the same content as `v` and the unused slots in the underlying `NTuple{N}` changed to `val`.
+
+# Examples
+```julia-repl
+julia> a = ImmutableVector{5}(5)
+1-element ImmutableVector{5, Int64}:
+ 5
+
+julia> a.data
+(5, 5, 5, 5, 5)
+
+julia> a_padded = padwith(a, 0)
+1-element ImmutableVector{5, Int64}:
+ 5
+
+julia> a_padded.data
+(5, 0, 0, 0, 0)
+
+```
+"""
+@inline function padwith(a::ImmutableVector{N, T}, value) where {N, T}
+    ul = a.length
+    l = Int(ul)
+    l == N && return a
+    cv = convert(T, value)
+    data = a.data
+    @inbounds ImmutableVector(ntuple(i-> (i <= l ? @inbounds(data[i]) : cv), Val{N}()), ul)
+end
+
