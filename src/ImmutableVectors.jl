@@ -4,7 +4,7 @@ export ImmutableVector
 export max_length, push, pushfirst, insert, padwith
 export ImmutableVectorArray, ImVecArray
 
-@inline unsafe_UInt8(x::Integer) = Base.Core.Intrinsics.trunc_int(UInt8, x)
+@inline unsafe_UInt8(x::Integer) = x % UInt8
 @inline unsafe_UInt8(x::UInt8) = x
 
 """

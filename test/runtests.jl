@@ -80,6 +80,10 @@ using Test
     @test padwith(v2,0) == v2
     @test padwith(v2,0) !== v2 # !== is the same as !(===)
     @test padwith(v2,-1) === ImmutableVector((3,2,1,-1,-1),3)
+
+    @test typeof(reverse(a)) <: ImmutableVector
+    @test reverse(a) == reverse(Array(a))
+    @test reverse(a, 3, 5) == reverse(Array(a), 3, 5)
 end
 
 @testset "ImmutableVectorArray" begin

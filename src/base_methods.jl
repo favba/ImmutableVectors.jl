@@ -37,7 +37,7 @@ end
 function Base.map(f::F, a::ImmutableVector, b::Vararg{ImmutableVector}) where {F <: Function}
     Nf = min_max_length(a, b)
     l = min(a.length, (x -> getfield(x, :length)).(b)...)
-    L = Int(l)
+    L = l % Int
     db = (a.data, (x -> getfield(x, :data)).(b)...)
     last_f = f((x -> (@inbounds getindex(x, L))).(db)...)
     func = @inline function (i)
@@ -63,3 +63,44 @@ function Base.circshift(a::ImmutableVector{N, T}, nn::Integer) where {N, T}
     end
     return @inbounds ImmutableVector{N, T}(ntuple(f, Val{N}()), a.length)
 end
+
+function Base.reverse(v::ImmutableVector{N, T}) where {N, T}
+    data = v.data
+    l = v.length
+    L = l % Int
+    @inbounds last_el = data[1]
+    f = @inline i -> (i < L) ? @inbounds(data[L - (i - 1)]) : last_el
+    return @inbounds ImmutableVector{N,T}(ntuple(f, Val{N}()), l)
+end
+
+function Base.reverse(v::ImmutableVector{N, T}, start::Integer, stop::Integer=lastindex(v)) where {N, T}
+    s, n = Int(start), Int(stop)
+    if n > s
+
+        l = v.length
+        L = l % Int
+
+        if !(1 ≤ s ≤ L)
+            throw(BoundsError(v, s))
+        elseif !(1 ≤ n ≤ L)
+            throw(BoundsError(v, n))
+        end
+
+        data = v.data
+
+        f = @inline function(i)
+
+            j = (s <= i <= n) ? (n - (i - s)) : i
+
+            return @inbounds(data[j])
+        end
+
+        return @inbounds ImmutableVector{N,T}(ntuple(f, Val{N}()), l)
+
+    else
+
+        return v
+
+    end
+end
+
