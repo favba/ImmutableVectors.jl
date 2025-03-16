@@ -27,6 +27,8 @@ using Test
 
     @test max_length(a) == 8
     @test max_length(typeof(a)) == 8
+    @test max_length(a.data) == 8
+    @test max_length(typeof(a.data)) == 8
 
 
     @test_throws BoundsError getindex(a, 6)

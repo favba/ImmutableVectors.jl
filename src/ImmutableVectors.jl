@@ -130,6 +130,8 @@ end
 
 @inline max_length(::ImmutableVector{N, T}) where {N, T} = N
 @inline max_length(::Type{<:ImmutableVector{N, T}}) where {N, T} = N
+@inline max_length(::NTuple{N, T}) where {N, T} = N
+@inline max_length(::Type{<:NTuple{N, T}}) where {N, T} = N
 
 include("broadcast.jl")
 include("base_methods.jl")
