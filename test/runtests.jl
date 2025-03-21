@@ -14,6 +14,7 @@ using Test
     a = ImmutableVector((1.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0, 5.0), 5)
 
     @test ImmutableVector{8}([1.0, 2.0, 3.0, 4.0, 5.0]) === a
+    @test ImmutableVector{4}([1.0, 2.0, 3.0, 4.0, 5.0], (1,3,5)) === ImmutableVector{4}(1.0, 3.0, 5.0)
     @test convert(ImmutableVector{8, Float64}, [1, 2, 3, 4, 5]) === a
     @test ImmutableVector{3}(2) === ImmutableVector{3, Int}((2, 2, 2), 1)
     @test ImmutableVector{3}(2, 1) === ImmutableVector{3, Int}((2, 1, 1), 2)

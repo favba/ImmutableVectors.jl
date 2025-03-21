@@ -87,6 +87,19 @@ end
 
 Base.convert(::Type{ImmutableVector{N_MAX, T}}, v::AbstractVector) where {N_MAX, T} = ImmutableVector{N_MAX, T}(v)
 
+@inline function ImmutableVector{N_MAX, T1}(v::AbstractVector{T}, indices) where {N_MAX, T1, T}
+    l = length(indices)
+    l <= N_MAX || throw(DimensionMismatch("Input length ($l) is larger than maximum allowed ($N_MAX)"))
+    f = @inline function (i)
+        ii = min(l, i)
+        @inbounds j = indices[ii]
+        convert(T1, v[j])
+    end
+    return @inbounds ImmutableVector{N_MAX, T1}(ntuple(f, Val{N_MAX}()), unsafe_UInt8(l))
+end
+
+@inline ImmutableVector{N_MAX}(v::AbstractVector{T}, indices) where {N_MAX, T} = ImmutableVector{N_MAX, T}(v, indices)
+
 @inline function _convert_smaller(::Type{ImmutableVector{N, T}}, v::ImmutableVector{N2, T2}) where {N, T, N2, T2}
     data = v.data
     return @inbounds ImmutableVector{N,T}(ntuple(@inline(i->convert(T,@inbounds(data[min(N2,i)]))), Val{N}()), v.length)
