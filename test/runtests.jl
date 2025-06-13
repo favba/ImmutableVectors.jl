@@ -43,6 +43,7 @@ using Test
     @test Base.setindex(a, 0, 5) == ImmutableVector((1.0, 2.0, 3.0, 4.0, 0.0, 0.0, 0.0, 0.0), 5)
 
     @test map(-, a) === ImmutableVector((-1.0, -2.0, -3.0, -4.0, -5.0, -5.0, -5.0, -5.0), 5)
+    @test map(Int, a) === ImmutableVector((1, 2, 3, 4, 5, 5, 5, 5), 5)
     @test map(+, a, a) === ImmutableVector((2.0, 4.0, 6.0, 8.0, 10.0, 10.0, 10.0, 10.0), 5)
     @test map(-, a, (1, 2, 3, 4)) === ImmutableVector((0.0, 0.0, 0.0, 0.0))
     @test map(-, (1, 2, 3, 4), a) === ImmutableVector((0.0, 0.0, 0.0, 0.0))

@@ -34,7 +34,7 @@ end
 
 @inline min_max_length(a::ImmutableVector, b::NTuple{N, ImmutableVector}) where {N} = Val{min(max_length(a), map(max_length, b)...)}()
 
-function Base.map(f::F, a::ImmutableVector, b::Vararg{ImmutableVector}) where {F <: Function}
+function Base.map(f::F, a::ImmutableVector, b::Vararg{ImmutableVector}) where {F}
     Nf = min_max_length(a, b)
     l = min(a.length, (x -> getfield(x, :length)).(b)...)
     L = l % Int
